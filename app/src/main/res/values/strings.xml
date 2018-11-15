@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CenterFinancialTechnology</string>
+    <string name="dialog_pole_title">Do you want edit this picture or delete?</string>
 </resources>

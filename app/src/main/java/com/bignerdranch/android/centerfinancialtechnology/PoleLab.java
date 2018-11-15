@@ -2,6 +2,7 @@ package com.bignerdranch.android.centerfinancialtechnology;
 
 import android.content.Context;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -9,6 +10,7 @@ import java.util.UUID;
 public class PoleLab {
     private static PoleLab sPoleLab;
     private List<Pole> mPoles;
+    private File mFile;
 
     public static PoleLab get(Context context) {
         if (sPoleLab == null) {
@@ -37,6 +39,14 @@ public class PoleLab {
 
     public List<Pole> getPoles() {
         return mPoles;
+    }
+
+    public File getPhotoFile(Pole pole) {
+        File filesDir = mContext.getFilesDir();
+        return new File(filesDir, pole.getPhotoFilename());
+        if (externalFilesDir == null) {
+
+        }
     }
 
     public Pole getPole(UUID id) {
