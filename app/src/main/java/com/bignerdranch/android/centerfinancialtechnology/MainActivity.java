@@ -11,35 +11,22 @@ import android.widget.ImageView;
 
 public class MainActivity extends SingleFragmentActivity {
 
-    private static final String KEY_INDEX = "index";
+    private static final String IMAGE_ID = "com.bignerdranch.android.centerfinancialtechnology.image_id";
     private int mCurrentIndex = 0;
+
+    public static Intent newIntent(Context packageContext) {
+        Intent intent = new Intent(packageContext, MainActivity.class);
+        return intent;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        /**if (savedInstanceState != null) {
-            Bitmap bitmap = savedInstanceState.getParcelable("image");
-            ImageView.setImageBitmap(bitmap);
-        }*/
     }
     @Override
     protected Fragment createFragment() {
         return new ScalingFragment();
     }
-
-    /**@Override
-    protected void onSaveInstanceState(Bundle outState) {
-        BitmapDrawable drawable = (BitmapDrawable) ImageView.getDrawable();
-        Bitmap bitmap = drawable.getBitmap();
-        outState.putParcelable("image", bitmap);
-        super.onSaveInstanceState(outState);
-    }*/
-
-    /**public static Intent newIntent(Context packageContext, ) {
-        intent.putExtra();
-        return intent;
-    }*/
 }

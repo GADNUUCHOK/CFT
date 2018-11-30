@@ -1,35 +1,40 @@
 package com.bignerdranch.android.centerfinancialtechnology;
 
-
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.ColorMatrixColorFilter;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.Image;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.RotateAnimation;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ListView;
+import android.widget.ProgressBar;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
-import java.util.UUID;
+
 
 
 /**
@@ -40,14 +45,19 @@ public class ScalingFragment extends Fragment {
     private ImageButton mButtonTurn;
     private ImageButton mButtonGamma;
     private ImageButton mButtonMirror;
+    private Button mButton;
     private ImageView mPhotoView;
     private RecyclerView mPoleRecyclerView;
     private SpisokAdapter mAdapter;
     private Uri mSelectedImageUri;
-    private static final int REQUEST_PHOTO= 123;
+    private ProgressBar mProgressBar;
+    private static final int REQUEST_PHOTO = 123;
     private static final int SELECT_PICTURE = 1;
-    private List<Pole> mSaveList;
-    private PoleLab mSaveLab;
+    private static final int URI_PICTURE = 12;
+    private String URIIMG = "http://www.nanonewsnet.ru/files/thumbs/2013/004_47.jpg";
+    private Bitmap bitmap;
+    private Image contentImage=null;
+    private static final String URI_IMAGE = "com.bignerdranch.android.centerfinancialtechnology.uri_image";
 
 
     @Override
@@ -57,6 +67,13 @@ public class ScalingFragment extends Fragment {
         mPhotoView = new ImageView(getActivity());
     }
 
+    /**@Override
+    public void onPause() {
+        super.onPause();
+
+        //PoleLab.get(getActivity()).updatePole(mPole);
+    }*/
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -64,7 +81,52 @@ public class ScalingFragment extends Fragment {
         mButtonTurn = (ImageButton) v.findViewById(R.id.turn);
         mButtonGamma = (ImageButton) v.findViewById(R.id.gamma);
         mButtonMirror = (ImageButton) v.findViewById(R.id.mirror);
+        mButton = (Button) v.findViewById(R.id.download);
+        mButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final EditText editText = new EditText(getActivity());
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setTitle(R.string.dialog_image)
+                        .setView(editText)
+                        .setPositiveButton(R.string.photo,
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                                        startActivityForResult(captureImage, REQUEST_PHOTO);
+                                    }
+                                })
+                        .setNegativeButton(R.string.gallery,
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        final Intent intent = new Intent();
+                                        intent.setType("image/*");
+                                        intent.setAction(Intent.ACTION_GET_CONTENT);
+                                        startActivityForResult(Intent.createChooser(intent,
+                                                "Select Picture"), SELECT_PICTURE);
+                                    }
+                                })
+                        .setNeutralButton(R.string.uri,
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        Uri uri = Uri.parse(editText.getText().toString());
+                                        URIIMG = uri.toString();
+                                        ProgressTask prTask = new ProgressTask(mPhotoView);
+                                        prTask.execute(URIIMG);
+                                    }
+                                });
+                builder.show();
+                mButton.setVisibility(View.INVISIBLE);
+                mPhotoView.setVisibility(View.VISIBLE);
+            }
+        });
         mPhotoView = (ImageView) v.findViewById(R.id.photo);
+        mProgressBar = (ProgressBar) v.findViewById(R.id.progressBar);
+        mProgressBar.setMax(100);
+        mPhotoView.setVisibility(View.INVISIBLE);
         if (mSelectedImageUri != null) {
             mPhotoView.setImageURI(mSelectedImageUri);
         }
@@ -74,13 +136,40 @@ public class ScalingFragment extends Fragment {
         mPhotoView.setOnClickListener(new View.OnClickListener() {
                                             @Override
                                             public void onClick(View v) {
-                                                final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                                                startActivityForResult(captureImage, REQUEST_PHOTO);
-                                                final Intent intent = new Intent();
-                                                intent.setType("image/*");
-                                                intent.setAction(Intent.ACTION_GET_CONTENT);
-                                                startActivityForResult(Intent.createChooser(intent,
-                                                        "Select Picture"), SELECT_PICTURE);
+                                                final EditText editText = new EditText(getActivity());
+                                                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                                                builder.setTitle(R.string.dialog_image)
+                                                        .setView(editText)
+                                                        .setPositiveButton(R.string.photo,
+                                                                new DialogInterface.OnClickListener() {
+                                                                    @Override
+                                                                    public void onClick(DialogInterface dialog, int which) {
+                                                                        final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                                                                        startActivityForResult(captureImage, REQUEST_PHOTO);
+                                                                    }
+                                                                })
+                                                        .setNegativeButton(R.string.gallery,
+                                                                new DialogInterface.OnClickListener() {
+                                                                    @Override
+                                                                    public void onClick(DialogInterface dialog, int which) {
+                                                                        final Intent intent = new Intent();
+                                                                        intent.setType("image/*");
+                                                                        intent.setAction(Intent.ACTION_GET_CONTENT);
+                                                                        startActivityForResult(Intent.createChooser(intent,
+                                                                                "Select Picture"), SELECT_PICTURE);
+                                                                    }
+                                                                })
+                                                        .setNeutralButton(R.string.uri,
+                                                                new DialogInterface.OnClickListener() {
+                                                                    @Override
+                                                                    public void onClick(DialogInterface dialog, int which) {
+                                                                        Uri uri = Uri.parse(editText.getText().toString());
+                                                                        URIIMG = uri.toString();
+                                                                        ProgressTask prTask = new ProgressTask(mPhotoView);
+                                                                        prTask.execute(URIIMG);
+                                                                    }
+                                                                });
+                                                builder.show();
                                             }
                                         });
 
@@ -100,9 +189,22 @@ public class ScalingFragment extends Fragment {
             mPoleRecyclerView.setAdapter(mAdapter);
         }
         else{
+            mAdapter.setPoles(poles);
             mAdapter.notifyDataSetChanged();
         }
     }
+
+    private void update(ImageView imageView) {
+        PoleLab poleLab = PoleLab.get(getActivity());
+        List<Pole> poles = poleLab.getPoles();
+        if (poles.size() % 2 == 0) {
+            imageView.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
+        } else {
+            imageView.setBackgroundColor(getResources().getColor(R.color.colorWhite));
+        }
+    }
+
+
     public void setDrawable(Drawable drawable) {
         mPhotoView.setImageDrawable(drawable);
     }
@@ -118,14 +220,83 @@ public class ScalingFragment extends Fragment {
             mPhotoView.setImageURI(selectedImageUri);
             mSelectedImageUri = data.getData();
         }
+        if (requestCode == URI_PICTURE && resultCode == Activity.RESULT_OK) {
+            Bitmap url = (Bitmap) data.getExtras().get("data");
+            new ProgressTask(mPhotoView).execute(URIIMG);
+            onReceivedTitle(mPhotoView, "Download");
+            mProgressBar.setVisibility(View.INVISIBLE);
+        }
     }
-    /**@Override
-    protected void onSaveInstanceState(Bundle outState) {
-        BitmapDrawable drawable = (BitmapDrawable) mPhotoView.getDrawable();
-        Bitmap bitmap = drawable.getBitmap();
-        outState.putParcelable("image", bitmap);
-        super.onSaveInstanceState(outState);
-    }*/
+
+    public void onProgressChanged(ImageView imageView, int newProgress) {
+        if (newProgress == 100) {
+            mProgressBar.setVisibility(View.INVISIBLE);
+        } else {
+            mProgressBar.setVisibility(View.VISIBLE);
+            mProgressBar.setProgress(newProgress);
+        }
+    }
+    public void onReceivedTitle(ImageView imageView, String title) {
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        activity.getSupportActionBar().setSubtitle(title);
+    }
+
+    public Bitmap getBitmapUrl(String src) {
+        try {
+            URL url = new URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap mBitmap = BitmapFactory.decodeStream(input);
+            return mBitmap;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private class ProgressTask extends AsyncTask<String, Void, Bitmap> {
+
+        ImageView imgV;
+        Bitmap bitmap;
+
+        public ProgressTask(ImageView imgV) {
+            this.imgV = imgV;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            onProgressChanged(mPhotoView, 0);
+            onReceivedTitle(mPhotoView, "Download");
+        }
+
+        @Override
+        protected Bitmap doInBackground(String... url){
+            String urldisplay = url[0];
+            bitmap = null;
+            try{
+                InputStream srt = new java.net.URL(urldisplay).openStream();
+                bitmap = BitmapFactory.decodeStream(srt);
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+            return bitmap;
+        }
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+
+            super.onPostExecute(bitmap);
+            imgV.setImageBitmap(bitmap);
+            onProgressChanged(mPhotoView, 100);
+            onReceivedTitle(mPhotoView, null);
+        }
+
+    }
+
 
     public class SpisokHolder extends RecyclerView.ViewHolder
             implements View.OnClickListener {
@@ -144,16 +315,16 @@ public class ScalingFragment extends Fragment {
                 public void onClick(View v) {
                     Pole pole = new Pole();
                     PoleLab.get(getActivity()).addPole(pole);
-                    PoleLab poleLab = PoleLab.get(getActivity());
+                    /**PoleLab poleLab = PoleLab.get(getActivity());
                     List<Pole> poles = poleLab.getPoles();
                     mImageView.setBackground(null);
                     if (poles.size() % 2 == 0) {
                         itemView.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
-                    }
+                    }*/
+                    update(mImageView);
                     Drawable drawable = mPhotoView.getDrawable();
                     mImageView.setImageDrawable(drawable);
                     mImageView.animate().rotation(90);
-
                 }
             });
             mButtonGamma.setOnClickListener(new View.OnClickListener() {
@@ -172,10 +343,6 @@ public class ScalingFragment extends Fragment {
                     Drawable photo = drawable;
                     mImageView.setImageDrawable(photo);
                     setBlackAndWhite(mImageView);
-
-                    //mAdapter.setItems(poles);
-                    //mAdapter.notifyDataSetChanged();
-
                 }
             });
             mButtonMirror.setOnClickListener(new View.OnClickListener() {
@@ -211,6 +378,21 @@ public class ScalingFragment extends Fragment {
             ColorFilter colorFilter = new ColorMatrixColorFilter(colorMatrix);
             idImage.setColorFilter(colorFilter);
 
+            /**Bitmap bitmap = Bitmap.createBitmap(idImage.getWidth(),
+                    idImage.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+
+            Paint paint = new Paint();
+            paint.setColorFilter(new ColorMatrixColorFilter(colorMatrix));
+            canvas.drawBitmap(bitmap, 0, 0, paint);*/
+
+        }
+
+        private void animation() {
+            RotateAnimation ra = new RotateAnimation(0f, 90f);
+            ra.setDuration(1000);
+            ra.setFillAfter(true);
+            mImageView.startAnimation(ra);
         }
 
         private void setRotation(ImageView idImage) {
@@ -270,6 +452,10 @@ public class ScalingFragment extends Fragment {
         @Override
         public int getItemCount() {
             return mPoles.size();
+        }
+
+        public void setPoles(List<Pole> poles) {
+            mPoles = poles;
         }
 
         public void setItems(List<Pole> poles) {

@@ -15,7 +15,10 @@ public class Pole {
 
 
     public Pole() {
-        mId = UUID.randomUUID();
+        this(UUID.randomUUID());
+    }
+    public Pole(UUID id) {
+        mId = id;
     }
 
     public UUID getId() {
@@ -35,13 +38,4 @@ public class Pole {
     public void setImage(Image image) {
         this.mImage = image;
     }
-
-    public String getPhotoFilename() {
-        return "IMG_" + getId().toString() + ".jpg";
-    }
-
-    public BackgroundColorSpan getColor() { return mColor; }
-
-    public void setColor(BackgroundColorSpan backgroundColorSpan) {
-        this.mColor = backgroundColorSpan; }
 }

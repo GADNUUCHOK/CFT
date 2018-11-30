@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:orientation="horizontal"
     tools:context=".ScalingFragment">
 
     <!-- TODO: Update blank fragment layout -->
@@ -13,6 +14,7 @@
         android:layout_height="250dp"
         android:layout_marginStart="15dp"
         android:layout_marginTop="10dp"
+        android:layout_gravity="bottom|left"
         android:background="@android:color/darker_gray"
         android:cropToPadding="true"
         android:scaleType="centerInside"
@@ -25,7 +27,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="50dp"
         android:layout_marginTop="20dp"
-        android:src="@android:drawable/ic_menu_view"
+        android:layout_gravity="center"
+        android:src="@drawable/cards_outline"
         app:layout_constraintStart_toEndOf="@+id/photo"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -34,8 +37,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="50dp"
+        android:layout_gravity="center"
         android:layout_marginTop="20dp"
-        android:src="@android:drawable/ic_menu_camera"
+        android:src="@drawable/card_text"
         app:layout_constraintStart_toEndOf="@+id/photo"
         app:layout_constraintTop_toBottomOf="@+id/turn" />
 
@@ -45,19 +49,27 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="50dp"
         android:layout_marginTop="20dp"
-        android:src="@android:drawable/ic_menu_compass"
+        android:layout_gravity="center"
+        android:src="@drawable/arrow_expand_horizontal"
         app:layout_constraintStart_toEndOf="@+id/photo"
         app:layout_constraintTop_toBottomOf="@+id/gamma" />
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/listView"
-        android:layout_width="200dp"
-        android:layout_height="240dp"
-        android:layout_marginTop="20dp"
-        app:layout_constraintTop_toBottomOf="@+id/photo"
-        tools:layout_editor_absoluteX="15dp"
-        android:layout_gravity="">
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right">
 
-    </android.support.v7.widget.RecyclerView>
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/listView"
+            android:layout_width="200dp"
+            android:layout_height="240dp"
+            android:layout_gravity="bottom|right"
+            android:layout_marginStart="48dp"
+            android:layout_marginTop="20dp"
+            app:layout_constraintStart_toEndOf="@+id/gamma"
+            app:layout_constraintTop_toTopOf="parent">
+
+        </android.support.v7.widget.RecyclerView>
+    </FrameLayout>
 
 </android.support.constraint.ConstraintLayout>
